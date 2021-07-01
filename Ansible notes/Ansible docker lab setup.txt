@@ -1,0 +1,45 @@
+ssh to ec2 instance
+
+
+ec2-user
+--------
+
+yum install ansible
+sudo yum update
+sudo yum-config-manager --enable epel
+sudo amazon-linux-extras install docker
+sudo service docker start
+sudo chkconfig docker on
+sudo usermod -aG docker ec2-user
+sudo curl -L https://github.com/docker/compose/releases/download/1.28.4/docker-compose-Linux-x86_64 -o /bin/docker-compose
+sudo chmod +x /bin/docker-compose
+git clone  https://github.com/devopsteach/Ansible.git
+cd Ansible/
+cd dockerlab-setup/
+
+vim .env                                # do this inside dockerlab-setup directory
+# Shared config volume
+CONFIG=/home/ec2-user/Ansible/dockerlab-setup/config
+
+# Shared home directories
+ANSIBLE_HOME=/home/ec2-user/Ansible/dockerlab-setup/ansible_home
+
+docker-compose up -d
+docker ps
+
+Inside ubuntu controller
+---------------------------------------------------------------------
+sudo docker exec -it ubuntu-c bash
+root@ubuntu-c:/	su - ansible
+ansible@ubuntu-c:~/	ssh-keygen
+ansible@ubuntu-c:~/	sudo apt update -y
+ansible@ubuntu-c:~/	sudo apt install sshpass -y
+ansible@ubuntu-c:~/	update hosts file vim /home/ansible/hosts
+			      centos1
+			      centos2
+			      centos3
+			      ubuntu1
+			      ubuntu2
+			      ubuntu3
+for user in ansible root; do for os in ubuntu centos;do for num in 1 2 3;do sshpass -p "password" ssh-copy-id -o StrictHostKeyChecking=no ${user}@${os}${num};done;done;done;
+ansible@ubuntu-c:~/ ansible -i hosts all -m ping

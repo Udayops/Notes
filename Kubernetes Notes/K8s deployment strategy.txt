@@ -1,0 +1,153 @@
+Strategy
+
+1). Rolling update (default)
+2). Recreate
+3). Blue Green
+4). Canary
+Rolling update --> rolling one after another
+****************************
+v1,v1,v1 ----> V2,v2,v2
+always 3 pods running maintained
+
+************deployments**************
+*****RS1****           ***RS2(new)***
+ ***pods***             ***pods***
+ P1 P2 P3 P4            P1 P2 P3 P4	
+ #  #  #  #              *  *  *  *
+
+Create new version of pod in new replica and kill the old pod in older replica
+
+Advantage: No Downtime
+Disadvantage: any Inflight request which old pod is processing might get killed
+
+Recreate --> terminate the old version and release the new one
+************************************************************
+Need to have maintainence window
+
+Blue green Deployment
+************************************************************
+              Traffic
+                 |
+   -------------- ----->--->-- 
+   |                          |
+(before)                  (after)
+
+Blue             |           Green
+                 |
+Deployment 1     |    Deployment 2
+RS1              |    RS2
+P1 P2 P3         |    P1 P2 P3
+#  #  #          |     *  *  *
+
+Utilizing extra resources. Same amount of resource need to be used again
+No downtime
+No inflight transaction issues
+
+
+Deployment Yaml:
+selector in spec should be same as labels in template
+
+Service Yaml:
+selector in service should be matched with label in pod
+**************************************************************************
+**Deployment***
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: webapp-pod
+  template:
+    metadata:
+      labels:
+        app: webapp-pod
+    spec:
+      containers:
+      - name: webapp
+        image: arungupta/wildfly-app:1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+
+**service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+  labels:
+    app: webapp-pod
+spec:
+  selector:
+    app: webapp-pod
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30010
+
+
+rolling update yaml sample
+***********************
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: webapp-pod
+
+to check the deployment stats: kubectl describe deploy webapp-deployment
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  27m    deployment-controller  Scaled up replica set webapp-deployment-56945f4ff7 to 4
+  Normal  ScalingReplicaSet  9m22s  deployment-controller  Scaled up replica set webapp-deployment-79999bb464 to 1
+  Normal  ScalingReplicaSet  9m22s  deployment-controller  Scaled down replica set webapp-deployment-56945f4ff7 to 3
+  Normal  ScalingReplicaSet  9m22s  deployment-controller  Scaled up replica set webapp-deployment-79999bb464 to 2
+  Normal  ScalingReplicaSet  9m9s   deployment-controller  Scaled down replica set webapp-deployment-56945f4ff7 to 2
+  Normal  ScalingReplicaSet  9m9s   deployment-controller  Scaled up replica set webapp-deployment-79999bb464 to 3
+  Normal  ScalingReplicaSet  9m7s   deployment-controller  Scaled down replica set webapp-deployment-56945f4ff7 to 1
+  Normal  ScalingReplicaSet  9m7s   deployment-controller  Scaled up replica set webapp-deployment-79999bb464 to 4
+  Normal  ScalingReplicaSet  8m58s  deployment-controller  Scaled down replica set webapp-deployment-56945f4ff7 to 0
+
+New replica set increase by 1(scaled up) with new version and old replica set decrease by 1(scaled down) until all pods are up in new replica
+
+***to check the rollout history
+kubectl rollout history deployment.apps/webapp-deployment
+
+***to rollback to the older version
+kubectl rollout undo deployment.apps/webapp-deployment
+OldReplicaSets:  <none>
+NewReplicaSet:   webapp-deployment-56945f4ff7 (4/4 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  2m22s  deployment-controller  Scaled up replica set webapp-deployment-56945f4ff7 to 1
+  Normal  ScalingReplicaSet  2m22s  deployment-controller  Scaled down replica set webapp-deployment-79999bb464 to 3
+  Normal  ScalingReplicaSet  2m22s  deployment-controller  Scaled up replica set webapp-deployment-56945f4ff7 to 2
+  Normal  ScalingReplicaSet  113s   deployment-controller  Scaled down replica set webapp-deployment-79999bb464 to 2
+  Normal  ScalingReplicaSet  113s   deployment-controller  Scaled up replica set webapp-deployment-56945f4ff7 to 3
+  Normal  ScalingReplicaSet  88s    deployment-controller  Scaled down replica set webapp-deployment-79999bb464 to 1
+  Normal  ScalingReplicaSet  88s    deployment-controller  Scaled up replica set webapp-deployment-56945f4ff7 to 4
+  Normal  ScalingReplicaSet  71s    deployment-controller  Scaled down replica set webapp-deployment-79999bb464 to 0
+
+
+Recreate Strategy
+---------------------------------------------------------
+
+spec:
+  replicas: 4
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: webapp-pod
+
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  74s   deployment-controller  Scaled down replica set webapp-deployment-56945f4ff7 to 0
+  Normal  ScalingReplicaSet  62s   deployment-controller  Scaled up replica set webapp-deployment-79999bb464 to 4

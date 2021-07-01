@@ -1,0 +1,250 @@
+Authorization and authentication
+In Kubernetes, you must be authenticated (logged in) before your request can be authorized (granted permission to access)
+
+# Instal open ssl to generate certificate
+ sudo apt install openssl -y
+
+#generate the rsa token
+openssl genrsa -out uday.pem
+
+#create the CSR certificate signin request
+ openssl req -new -key uday.pem -out uday-csr.pem -subj "/CN=uday/O=training"
+
+# copy ca.key and ca.crt from minikube
+    cd .minikube or minikube ssh  ==> any of this will work and copy the file
+   cat > ca.crt
+   ssh minikube
+   minikube ssh
+   cat > ca.key
+
+# generate certificate to login
+ openssl x509 -req -in uday-csr.pem -CA ca.crt -CAkey ca.key -CAcreateserial -out uday.crt -days 356====> uday.crt
+
+
+################################################333
+.kube  config file
+################################
+apiVersion: v1
+clusters:                                 =====> cluster information
+- cluster:
+    certificate-authority: C:\Users\91951\.minikube\ca.crt
+    extensions:
+    - extension:
+        last-update: Wed, 23 Jun 2021 22:53:32 IST
+        provider: minikube.sigs.k8s.io
+        version: v1.19.0
+      name: cluster_info
+    server: https://192.168.99.101:8443                ====> Kube API server
+  name: minikube
+contexts:                                              ====> have the cluster and user information. which cluster is connected used by which user
+- context:
+    cluster: minikube
+    extensions:
+    - extension:
+        last-update: Wed, 23 Jun 2021 22:53:32 IST
+        provider: minikube.sigs.k8s.io
+        version: v1.19.0
+      name: context_info
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube                                          ====> current user among all the available user
+kind: Config
+preferences: {}
+users:                                                              =====> default user
+- name: minikube
+  user:                                                              
+    client-certificate: C:\Users\91951\.minikube\profiles\minikube\client.crt
+    client-key: C:\Users\91951\.minikube\profiles\minikube\client.key
+
+
+## Take the backup of config file
+$ cd ~/.kube
+$ mv config config_backup
+
+# set the new user
+$ kubectl config set-credentials uday --client-certificate=uday.crt --client-key=uday.pem
+User "uday" set.
+
+$ cd ~/.kube
+$ cat config
+apiVersion: v1
+clusters: null                             =====> cluster information not there, u need to create
+contexts: null
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: uday
+  user:                                ====> new user set
+    client-certificate: ..\uday.crt
+    client-key: ..\uday.pem
+
+
+# copy paste the cluster information from backup
+
+#create the context
+$ kubectl config set-context uday --cluster=minikube --user uday
+Context "uday" created.
+
+#try accessing the nodes
+$ kubectl get nodes
+Unable to connect to the server: dial tcp [::1]:8080: connectex: No connection could be made because the target machine actively refused it.
+
+# set current context
+inside config file change below
+current-context: "uday"
+
+# Authentication done but authorization still not done that's why below error
+$ kubectl get nodes
+Error from server (Forbidden): nodes is forbidden: User "uday" cannot list resource "nodes" in API group "" at the cluster scope
+
+
+***********************Authorization***********************************************
+RBAC --- Role based acces control
+what resources? what kind of priviledge on resources? and who has to used that roles
+
+types:
+normal roles
+cluster level roles
+
+Roles ---> it will hv certain permission
+if user allocated to the role.. it will have permission
+
+resources: pod, replica,services,config map etc
+
+Roles belongs to namespace
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: pod-writer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["extensions", "apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: write-pods
+  namespace: default
+subjects:
+- kind: User
+  name: simbu
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-writer
+  apiGroup: rbac.authorization.k8s.io
+
+#setting uday user in main config file
+$ mv config config_uday_alone
+$ mv config_backup config
+
+$ kubectl config set-credentials uday --client-certificate=uday.crt --client-key=uday.pem
+User "uday" set.
+
+
+# setting context
+$ kubectl config set-context uday --cluster=minikube --user=uday
+Context "uday" created.
+
+$ kubectl config get-contexts
+CURRENT   NAME       CLUSTER    AUTHINFO   NAMESPACE
+*         minikube   minikube   minikube   default
+          uday       minikube   uday
+
+
+# changing the current context
+$ kubectl config use-context uday
+Switched to context "uday".
+
+$ kubectl config get-contexts
+CURRENT   NAME       CLUSTER    AUTHINFO   NAMESPACE
+          minikube   minikube   minikube   default
+*         uday       minikube   uday
+
+
+$ kubectl config use-context minikube
+Switched to context "minikube".
+
+#apply the roles
+$ kubectl apply -f roles.yaml
+role.rbac.authorization.k8s.io/pod-writer created
+Warning: rbac.authorization.k8s.io/v1beta1 RoleBinding is deprecated in v1.17+, unavailable in v1.22+; use rbac.authorization.k8s.io/v1 RoleBinding
+rolebinding.rbac.authorization.k8s.io/write-pods created
+
+$ kubectl get roles
+NAME         CREATED AT
+pod-writer   2021-06-23T19:16:42Z
+
+$ kubectl get rolebinding
+NAME         ROLE              AGE
+write-pods   Role/pod-writer   109s
+
+$ kubectl config use-context uday
+Switched to context "uday".
+
+$ kubectl get po
+No resources found in default namespace.
+
+$ kubectl get nodes
+Error from server (Forbidden): nodes is forbidden: User "uday" cannot list resource "nodes" in API group "" at the cluster scope
+
+only in the default namespace require access is there
+
+$ kubectl run nginx --image nginx
+pod/nginx created
+
+$ kubectl get po
+NAME    READY   STATUS              RESTARTS   AGE
+nginx   0/1     ContainerCreating   0          16s
+
+$ kubectl delete po nginx
+pod "nginx" deleted
+
+$ kubectl get po -n kube-system
+Error from server (Forbidden): pods is forbidden: User "uday" cannot list resource "pods" in API group "" in the namespace "kube-system"
+
+***********************cluster role*******************************
+
+for providing admin permissions
+
+$ kubectl get clusterroles
+NAME                                                                   CREATED AT
+admin                                                                  2021-06-22T16:19:22Z
+cluster-admin                                                          2021-06-22T16:19:22Z
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: User
+  name: "uday"
+  apiGroup: rbac.authorization.k8s.io
+
+$ kubectl apply -f clusterrolebinding.yaml
+clusterrolebinding.rbac.authorization.k8s.io/admin-user created
+
+$ kubectl get clusterrolebinding
+NAME                                                   ROLE                                                                               AGE
+admin-user                                             ClusterRole/cluster-admin                                                          64s
+
+
+#Now all admin access are there
+$ kubectl config use-context uday
+Switched to context "uday".
+
+$ kubectl get nodes
+NAME       STATUS   ROLES                  AGE   VERSION
+minikube   Ready    control-plane,master   27h   v1.20.2

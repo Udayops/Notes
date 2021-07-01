@@ -1,0 +1,64 @@
+Namespaces are a way to organize clusters into virtual sub-clusters — they can be helpful when different teams or projects share a Kubernetes cluster. 
+Any number of namespaces are supported within a cluster, each logically separated from others but with the ability to communicate with each other.
+
+We can have different Namespace for Dev, Stage, Prod 
+
+Weave network Plugins installed in kubernetes: In cluster to manage networking across all the nodes inside cluster
+
+communicate between container happens using localhost
+
+**** command to get all the namespace
+[root@kubemaster ~]# kubectl get ns
+NAME              STATUS   AGE
+default           Active   24d
+kube-node-lease   Active   24d
+kube-public       Active   24d
+kube-system       Active   24d
+test              Active   20d
+
+
+**** Command to get all details (pods,service,deployment,replicaset) inside system defined kube-system namespace
+[root@kubemaster ~]# kubectl -n kube-system get all
+-n --> for namespace
+
+*** Creating namespace
+[root@kubemaster ~]# kubectl create ns test1
+namespace/test1 created
+
+**** accessing namespace
+[root@kubemaster ~]# kubectl get ns
+
+[root@kubemaster ~]# kubectl get ns test1
+NAME    STATUS   AGE
+test1   Active   79s
+
+**** To get all pods/service/deploy/replica inside Namespace
+[root@kubemaster ~]# kubectl -n test get all
+
+**** To deploy in a namespace
+[root@kubemaster ~]# kubectl -n test1 apply -f mysql-deploy.yaml
+deployment.apps/mysql-deploy created
+
+[root@kubemaster ~]# kubectl -n test1 apply -f mysql-service.yaml
+service/db created
+
+[root@kubemaster ~]# kubectl -n test1 get all
+
+**** To create alias shortcut to use command
+[root@kubemaster ~]# alias 'k=kubectl -n test'
+[root@kubemaster ~]# k get all
+
+**** To run Centos image
+[root@kubemaster ~]# k run -it --image centos -- bash
+[root@kubemaster ~]# k exec -it centos -- bash          # Going inside the container
+
+**** To watch the live pod creation
+[root@kubemaster ~]# watch kubectl -n test get po
+
+
+ 
+
+
+
+
+

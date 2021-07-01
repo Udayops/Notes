@@ -1,0 +1,35 @@
+docker container rename 7a5ba61301cb 
+sudo docker rmi $(docker images -q) -f
+Lets understand Docker Container - deeper:
+
+	- Remove and Rename your container
+          docker container rename 7a5ba61301cb server_2  (For rename)
+          docker container rm e6fff644fe5e -f (removing single running container)
+          docker container prune (removing all stopped container)
+          
+	- start ( docker start 7a5ba61301cb)
+	- stop ( docker stop 7a5ba61301cb)	
+	- map port (sudo docker run -d -p 8081:80 --name server_1 nginx-server:v1)
+	- variable
+	- limiting resources for containers
+          lscpu
+          docker run -d --name web1 -p 8081:80 --memory "50mb" apache-centos:v8
+          docker run -d --name web -p 8081:80 --memory "100mb" --cpuset-cpus 0 apache-centos:v8
+	- docker cp
+          >> docker cp htmlapp web2:/tmp/ (to copy from current directory to docker)
+          >> docker exec -it web2 bash -c 'echo "docker cp session" > /tmp/docker.txt'
+          >> docker exec -it web2 bash -c 'ls -ltr /tmp/'
+          >> docker cp web2:/tmp/docker.txt .(to copy from docker to current host directory)
+          >> cat docker.txt
+	- Change the docker root dir
+	        sudo systemctl stop docker.service
+                sudo systemctl status docker.service
+  407           cp -r /var/lib/docker/* /opt/docker/
+  408           ls -ltr /var/lib/docker/
+  409           sudo cp -r /var/lib/docker/* /opt/docker/
+  410           sudo cp /var/lib/docker/* /opt/docker/
+  411           sudo ls -ltr /var/lib/docker/
+  412           sudo cp -rf /var/lib/docker/* /opt/docker/
+  413           sudo cp -rf /var/lib/docker /opt/
+  414           sudo systemctl start docker.service
+  415           sudo systemctl status docker.service

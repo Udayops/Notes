@@ -1,0 +1,124 @@
+1  docker network create --help
+    2  docker network create -d bridge --subnet 10.1.0.0/24 --gateway 10.1.0.1 dockernet
+    3  docker network ls
+    4  for i in {1..2};do docker run -dti --name dockernet-${i} --network dockernet centos;done
+    5  docker ps
+    6  docker network inspect dockernet
+    7  docker exec -it dockernet-1 bash -c 'ping 10.1.0.3'
+    8  docker exec -it dockernet-1 bash -c 'ping dockernet-2'
+    9  docker exec -it dockernet-2 bash -c 'ping dockernet-1'
+   10  docker networks
+   11  docker network
+   12  docker network ls
+   13  docker run -dti --name host-1 --network host centos
+   14  docke rps
+   15  docker ps
+   16  docker exec -it host-1 bash
+   17  ls
+   18  docker ps
+   19  docker run -d --name nginx-1 --network host nginx
+   20  docker ps
+   21  docker run -d --name nginx-2 --network host nginx
+   22  docker ps
+   23  docker ps -a
+   24  docker logs nginx-2
+   25  ifconfig
+   26  clear
+   27  docker network ls
+   28  docker network inspect none
+   29  docker run -dti --name none-1 --network none centos
+   30  docke rps
+   31  docker ps
+   32  docker inspect none-1
+   33  d
+   34  docker network ls
+   35  docker ps
+   36  docker exec -it dockernet-1 bash -c 'ping container-1'
+   37  docker exec -it dockernet-1 bash -c 'ping 172l.17.0.2'
+   38  docker exec -it dockernet-1 bash -c 'ping 172.17.0.2'
+   39  docker network connect dockernet container-1
+   40  docker exec -it dockernet-1 bash -c 'ping 172.17.0.2'
+   41  docker exec -it dockernet-1 bash -c 'ping container-1'
+   42  docker exec -it dockernet-1 bash -c 'ping container-2'
+   43  docker network disconnect dockernet container-1
+   44  docker exec -it dockernet-1 bash -c 'ping container-2'
+   45  docker exec -it dockernet-1 bash -c 'ping container-1'
+   46  ifconfig
+   47  docker exec -it dockernet-1 bash -c 'ping 172.31.3.93'
+   48* docker exec -it container-1 bash -c 'nc '
+   49  docker exec -it dockernet-1 bash -c 'nc -zv 172.31.3.93 80'
+   50  history
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+1) Bridge network (default network). Also can be created custom
+============================================================================================================================================================
+For custom Bridge network creation:
+
+a) Create the custom bridge network dockernet
+docker network create -d bridge --subnet 10.1.0.0/24 --gateway 10.1.0.1 dockernet
+
+b) View all the network available
+docker network ls
+
+c)create container dockernet-1,dockernet-2 with the bridge network dockernet on centos
+for i in {1..2};do docker run -dti --name dockernet-${i} --network dockernet centos;done
+
+d) view the containers created
+docker ps
+
+e)check the container part of bridge network dockernet
+docker network inspect dockernet
+
+f) try to ping from dockernet-1 to dockernet-2 and vice versa( Ping using both ip and container name)
+docker exec -it dockernet-1 bash -c 'ping 10.1.0.3'
+docker exec -it dockernet-1 bash -c 'ping dockernet-2'
+docker exec -it dockernet-2 bash -c 'ping dockernet-1'
+
+It Works!!!!!!!!!!!!!!!!!
+
+2)Host Network
+================================================================================================================================================================
+It uses the network of the host on which it is running. Not preffered. Rarely used
+
+a) Create container as part of host network
+docker run -dti --name host-1 --network host centos
+
+b) view the containers created
+docker ps
+
+c) check the ip details of host machine
+ip a s
+
+d) go inside the container host-1 and check the ip details
+docker exec -it host-1 bash
+
+e) After going inside the host-1 container check the ip details
+ip a s
+
+Both Ip matched. It Works!!!!!!!!!!!!!!!!!
+
+f)try to create another two container with host network
+docker run -d --name nginx-1 --network host nginx
+docker ps
+
+docker run -d --name nginx-2 --network host nginx
+docker ps
+
+g) only nginx-1 container is running while nginx-2 exited
+docker ps -a
+
+h) check the reason why nginx-2 terminated
+docker logs nginx-2 ====> address already in use
+
+3)None network
+=================================================================================================================================================================
+it doesn't have any Ip. It is null. It can't establish communication with any container/machine
+
+1) To check the network details
+docker network inspect none
+
+2) create container with none network
+docker run -dti --name none-1 --network none centos
+
+3)Check the network details
+docker inspect none-1

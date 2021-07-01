@@ -1,0 +1,89 @@
+
+**** creating a fresh encrypted file************
+ansible@ubuntu-c:~$ ansible-vault create vault-pass.yaml
+New Vault password:
+Confirm New Vault password:
+====> it will open a editor to write the file
+
+
+ansible@ubuntu-c:~$ cat vault-pass.yaml
+$ANSIBLE_VAULT;1.1;AES256
+61643031386364623963323231666332323466653230336265666463326237613636626266636261
+6233383534636436393533643036356162383838366633330a613665353432313933333438666337
+61363862356364646336353462626666633436363164633331313765393632353061366463356233
+3032643330393538310a323061363736323231306231313632336461643435353037646632616636
+35386266626431663630333434633836376437636632386633346231383762363835
+
+
+*********View the encrypted file
+ansible@ubuntu-c:~$ ansible-vault view vault-pass.yaml
+Vault password:
+This is encrypted file
+
+
+********Edit the encrypted file
+ansible@ubuntu-c:~$ ansible-vault edit vault-pass.yaml
+Vault password:
+===> it will open the editor to edit the file
+ansible@ubuntu-c:~$ ansible-vault view vault-pass.yaml
+Vault password:
+This is encrypted file
+second line
+
+
+******* to decrypt the file
+
+ansible@ubuntu-c:~$ ansible-vault decrypt vault-pass.yaml
+Vault password:
+Decryption successful
+ansible@ubuntu-c:~$ cat vault-pass.yaml
+This is encrypted file
+second line
+
+******* encrypt the existing file
+ansible@ubuntu-c:~$ ansible-vault encrypt vault-pass.yaml
+New Vault password:
+Confirm New Vault password:
+Encryption successful
+ansible@ubuntu-c:~$ cat vault-pass.yaml
+$ANSIBLE_VAULT;1.1;AES256
+33363536653365653330636332323035386164393532653865363237326533313364333266393638
+3239396439623561653564323137353666383733393534650a396333386338633432303065396535
+66633639313137356530383339343433376336353263373639376139623038383932643334333636
+6362373438633261660a646437356265636130303334323363336264373561343133316630303732
+31653733633336666462306562616466303762643037306232656336353264636561303362663231
+6665353963663433366630353633383466653935623766663332
+
+#################################################################################
+Vault usage in the Playbook
+#################################################################################
+
+Create a private repository
+try to clone it in ansible directory.
+it will ask for user id and password
+below fromat we can give the id and password
+https://userid:pass@github.com/Udayops/Ansible.git
+
+**********To clone the repo
+git clone https://userid:pass@github.com/Udayops/Ansible.git
+
+vault-pass.yaml
+git_password: Rights123#
+
+git_vault.yaml
+---
+- name: cloning Git local repository using id and password
+  hosts: centos1
+  vars_files:
+    - vault-pass.yaml
+  tasks:
+    - name: Clone a repo
+      git:
+        repo: https://Udayops:{{ git_password }}@github.com/Udayops/GitVault.git
+        dest: /opt/ansadmin/test-vault
+
+ ansible-playbook git_vault.yaml --ask-vault-password
+
+
+
+

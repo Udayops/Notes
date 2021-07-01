@@ -1,0 +1,371 @@
+    1  yum install ansible
+    2  yum update
+    3  sudo yum update
+    4  sudo yum-config-manager --enable epel
+    5  yum repolist
+    6  sudo -i
+    7  docker
+    8  sudo yum install git -y
+    9  sudo amazon-linux-extras install docker
+   10  sudo service docker start
+   11  sudo checkconfig docker on
+   12  sudo chkconfig docker on
+   13  sudo usermod -aG docker ec2-user
+   14  sudo curl -L https://github.com/docker/compose/releases/download/1.28.4/docker-compose-Linux-x86_64 -o /bin/docker-compose
+   15  sudo chmod +x /bin/docker-compose
+   16  git clone  https://github.com/devopsteach/Ansible.git
+   17  ls
+   18  cd Ansible/
+   19  cd dockerlab-setup/
+   20  ls
+   21  docker --version
+   22  docker-compose --version
+   23  pwd
+   24  vim .env
+   25  docker-compose up -d
+   26  ls -ltr /bin/docker-compose
+   27  sudo docker-compose up -d
+   28  clear
+   29  docke rps
+   30  docker ps
+   31  sudo docker ps
+   32  sudo docker exec -it ubuntu-c bash
+   33   ansible -i hosts all -m ping
+   34  docker --version
+   35  ped
+   36  pwd
+   37  su - ansible
+   38  sudo -i
+   39  service docker status
+   40  sudo usermod -a -G docker ec2-user
+   41  sudo chkconfig docker on
+   42  docker-compose --version
+   43  cd ansible/
+   44  git clone https://github.com/devopsteach/Ansible.git
+   45  sudo -i
+   46  cd /home/ec2-user/Ansible/dockerlab-setup
+   47  ls
+   48  ls -a
+   49  vim .env
+   50  history
+
+
+# Shared config volume
+CONFIG=/home/ec2-user/Ansible/dockerlab-setup/config
+
+# Shared home directories
+ANSIBLE_HOME=/home/ec2-user/Ansible/dockerlab-setup/ansible_home
+
+update hosts file vim /home/ansible/hosts
+centos1
+centos2
+centos3
+ubuntu1
+ubuntu2
+ubuntu3
+
+ansible@ubuntu-c:~/.ssh$ history
+    1  ssh-keygen
+    2  cd .ssh
+    3  ls -ltrh
+    4  sudo apt update -y
+    5  sudo apt install -y
+    6  for user in ansible root; do for os in ubuntu centos;do for num in 1 2 3;do sshpass -p "password" ssh-copy-id -o StrictHostKeyChecking=no ${user}@${os}${num};done;done;done;
+    7  sudo apt install sshpass -y
+    8  for user in ansible root; do for os in ubuntu centos;do for num in 1 2 3;do sshpass -p "password" ssh-copy-id -o StrictHostKeyChecking=no ${user}@${os}${num};done;done;done;
+    9  docker ps
+   10  history
+ansible@ubuntu-c:~/.ssh$ exit
+logout
+root@ubuntu-c:/# exit
+
+Module
+   33  ansible -i hosts centos1 -m yum -a "name=git state=present"  -u root
+   34  ansible -i hosts centos1 -m yum -a "name=git state=absent"  -u root
+   35  ansible -i hosts centos1 -m yum -a "name=git state=present"  -u root
+   36  ansible -i hosts centos1 -m yum -a "name=httpd state=present"  -u root
+   37  ansible -i hosts centos1 -m service -a "name=httpd state=started"  -u root
+   38  ansible -i hosts centos1 -m service -a "name=httpd state=stopped"  -u root
+   39  ansible -i hosts all -m command -a "uptime"
+   40  ansible -i hosts centos1 -m shell -a "cat /etc/sudoers | grep '^root'" -u root
+   41  ansible -i hosts centos1 -m shell -a "cat /etc/sudoers | grep -w "Defaults"" -u root
+   42  ansible -i hosts centos1 -m shell -a "cat /etc/sudoers | grep -c "Defaults"" -u root
+   43  ansible -i hosts centos1 -m shell -a "cat /etc/sudoers |grep '^root'" -u root
+   44  ansible -i hosts centos1 -m find -a "path='/etc' file_type=file patterns='sudoers'"
+   45  ansible -i hosts centos1 -m find -a "path='/etc' file_type=file patterns='*.conf'"
+
+ansible Playbook
+   75  ansible-playbook play1.yaml
+   76  vim play1.yaml
+   77  ansible-playbook --syntax-check play1.yaml
+   78  ansible-playbook play1.yaml
+hosts file
+[control]
+ubuntu-c ansible_connection=local
+
+[centos]
+centos1 ansible_port=22
+centos[2:3]
+
+[centos:vars]
+ansible_user=root
+
+[ubuntu]
+ubuntu[1:3]
+
+
+[ubuntu:vars]
+ansible_become=true
+ansible_become_pass=password
+
+[linux:children]
+centos
+ubuntu
+
+
+[alservers]
+centos1
+centos2
+centos3
+ubuntu1
+ubuntu2
+ubuntu3
+~
+~
+---------------------------------------------------
+ansible.cfg
+[defaults]
+inventory =hosts
+host_key_checking = False
+-----------------------------------------------------
+---
+- name: my first play
+  #HOSTS
+  hosts: linux
+  gather_facts: False
+  tasks:
+    - name: Check availibility of Targets
+      ping:
+
+    - name: Install Apache
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: Copy index test page
+      template:
+        src: "files/index.html.j2"
+        dest: "/var/www/{{ http_host }}/index.html"
+
+-----------------------------------------------------------------------------------------------------------------
+---
+- name: Install Webserver Apache on UBUNTU and change the Index File
+  hosts: ubuntu
+  become: true
+  gather_facts: False
+  tasks:
+    - name: install the webserver Apache
+      apt:
+        name: apache2
+        state: latest
+        update_cache: yes
+    - name: copy the index page
+      template:
+        src: "/home/ansible/myfile/index.html"
+        dest: "/var/www/index.html"
+
+   - name
+     copy:
+        src:
+        dest:
+        force:
+         backup: yes
+ssh centos1 -l root ls -ltr /var/www/html
+
+----------------------------------------------------------------------------------------------------------
+---
+- name: Play to copy the content of the file
+  hosts: linux
+  become: yes
+  gather_facts: False
+  tasks:
+    - name: Create the directory /etc/modd
+      file:
+        path: /etc/modd
+        state: directory
+    - name: Create the file myfile.txt in directory /etc/modd
+      file:
+        path: "/etc/modd/myfile.txt"
+        state: touch
+    - name: Write the content into the file(myfile.txt)
+      copy:
+        dest: /etc/modd/myfile.txt
+        content: |
+          this is my file
+          and it worked
+    - name: Copy the content from other file to myfile.txt
+      copy:
+        dest: /etc/modd/myfile.txt
+        src: /home/ansible/myfile1.txt
+----------------------------------------------------------------------------------------------------------------
+---
+- name: Play to do the operation on shell file
+  hosts: linux
+  become: yes
+  gather_facts: False
+  tasks:
+    - name: Create the directory /opt/Jboss
+      file:
+        path: /opt/Jboss
+        state: directory
+    - name: Create the file Jboss.sh in directory /opt/Jboss
+      file:
+        path: "/opt/Jboss/Jboss.sh"
+        state: touch
+    - name: Copy the content from local file to Jboss.sh
+      copy:
+        dest: /opt/Jboss/Jboss.sh
+        src: /home/ansible/myshell.txt
+    - name: change the permission of Jboss.sh
+      file:
+        owner: ansible
+        path: /opt/Jboss
+        mode: 0777
+        state: directory
+        recurse: yes
+
+
+---
+-rwxrwxr-x 1 root root 44 Mar  6 15:08 Jboss.sh
+- hosts: ubuntu
+  tasks:
+    - debug: var=ansible_all_ipv4_addresses
+    - debug: var=ansible_default_ipv4.address
+
+
+Include ports.conf
+Listen 8081
+
+ansible-playbook var.yaml -e com_var="hello"
+course_list: [ "Hindi", "English", "Maths", "Science", "Social science" ]
+
+----------------------------------------------------------------------------------------
+---
+- name: Variable session
+  hosts: centos
+  vars:
+    inst_name: Beasnt
+    course_name: Devops
+    student_list:
+      - Akhil
+      - aditya
+      - sush
+      - Uday
+  vars_files:
+    - varfile.yaml
+  vars_prompt:
+    - name: user_name
+      private: False
+    - name: password
+      private: True
+  tasks:
+    - name: display my vbariable
+      debug:
+        msg: Institute name is "{{inst_name}}" and the course_name is "{{course_name}}", available students are {{student_list}}
+    - name: display my varfile
+      debug:
+        msg: "{{course_list }}"
+    - name: display my var_prompt
+      debug:
+        msg: my user name is {{ user_name }} and {{ password }}
+    - name: Display host and group variable
+      debug:
+        msg: group var and remote var is {{ hostvars[ansible_nodename].ansible_user }}
+    - name: variable from command line
+      debug:
+        msg: my commandline variable is {{ com_var }}
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+ansible centos1 -m setup | grep ansible_distribution
+
+git push --set-upstream https://github.com/Udayops/AnsibleProject.git master
+port 80,3306 maria db
+
+db1:
+			
+172.31.47.6
+
+wb1
+3.137.156.48
+172.31.36.222
+
+wb2
+3.139.59.200
+172.31.40.92
+
+http://18.189.185.30
+http://18.224.67.187
+
+http://3.137.156.48
+http://3.139.59.200
+python install
+
+
+18.191.236.193
+    1  python --version
+    2  sudo apt install python
+    3  python --version
+    4  sudo apt-get -y install python
+    5  sudo apt update
+    6  sudo apt -y upgrade
+    7  	
+    8  python --version
+    9  history
+
+show databases;
+show tables from testdb;
+select * from testdb.test;
+	
+Himanshu
+303514
+268265 
+263487
+268265
+290269
+292763
+299713
+303514
+303572
+303573
+303574
+
+
+Deepshikha
+297436
+304012
+289355
+301535
+301536
+
+Reetu
+296329
+298634
+298638
+298867
+298873
+302912
+303333
+303334
+
+Saurabh
+275357
+275418
+276794
+277558
+277696
+278043
+
+
+3.12.73.109
+see if you can log in manually and write to the file that it will be adding to, the authorized_keys file. ~/.ssh/authorized_keys 
+If you can then the ssh-copy-id should work. 
+If not then see what stage gives a problem The side you are logging into has to accept password login for you to get in. 
+You can remove passwordlogin once ssh-copy-id has done its thing and enabled you to login via key. PasswordAuthentication yes (in sshd_config) file

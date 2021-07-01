@@ -1,0 +1,261 @@
+deleting a branch 
+$ git branch -d<branch name>
+$ git branch -d dev-phase3
+
+deleting a remote branch
+$ git push origin -delete <branch name>  
+$ git push origin -delete dev-phase2
+
+renaming a branch
+git branch -m dev-phase3
+
+Set upstream branch using an alias
+$ git push -u origin HEAD
+
+changing to master branch
+git branch -m master
+
+########################################################################################
+GIT Revert
+revert is used to revert some changes
+
+git revert <commit-id>
+$ git revert 099a8b4c8d92f4e4f1ecb5d52e09906747420814  
+
+git revert merge
+$ git revert <commit reference> -m 1  
+Here, -m 1 is used for the first parent as the mainline. Merge commit has multiple parents.
+#########################################################################################
+Git Reset
+reset stands for undoing changes. The git reset command is used to reset the changes.
+Soft
+Mixed
+Hard
+
+Generally, the reset hard mode performs below operations:
+
+It will move the HEAD pointer.
+It will update the staging Area with the content that the HEAD is pointing.
+It will update the working directory to match the Staging Area.
+
+touch mald.txt
+
+git add .
+
+git status
+mald.txt in staging area
+git log --oneline
+
+git reset --hard
+git status
+nothing to commit, working tree clean
+  
+we lost the file in staging area 
+
+*** same case as earlier 
+git reset --mixed or git reset(default) ===> even the file was added it goes back as untracked file
+It will move the HEAD pointer
+It will update the Staging Area with the content that the HEAD is pointing to.
+
+git status
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        mald.txt
+
+*** same case as earlier 
+git reset --soft
+Generally, it is used to change the position of the Head ===> staging area file will go as untracked and commited file goes to staging area
+$ git reset --soft  2c5a8820091654  
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        mald.txt
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   sam.sh
+
+
+$ git reset <option> <commit-sha>  
+--soft
+--mixed
+--Hard
+$ git reset --hard 52e5315
+#######################################################################################
+git diff
+
+if changing already existing file (text1.txt)
+$ git diff
+
+$ git diff
+diff --git a/text1.txt b/text1.txt
+index 809f363..56f1e29 100644
+--- a/text1.txt
++++ b/text1.txt
+@@ -1 +1,2 @@
+ this is second record
++hello
+
+$ git diff --staged  ==> to check the difference in staged file but not commited
+ 
+$ git diff HEAD  ==> to check the difference commited file and then changed
+ 
+$ git diff <commit1-sha> <commit2-sha>  	
+$ git diff 8767b6f 81988c3
+diff --git a/text1.txt b/text1.txt
+index e69de29..809f363 100644
+--- a/text1.txt
++++ b/text1.txt
+@@ -0,0 +1 @@
++this is second record
+
+$ git diff <branch 1> < branch 2> 
+########################################################################################
+Git Stash
+
+Sometimes you want to switch the branches, but you are working on an incomplete part of your current project. 
+You don't want to make a commit of half-done work. 
+Git stashing allows you to do so. The git stash command enables you to switch branches without committing the current branch.
+
+git add .
+git status ==> file added but not commited in staging area
+
+$ git stash or $ git stash save "<Stashing Message>" 
+git status ==> working tree clean
+
+$ git stash list  
+stash@{0}: 
+stash@{1}:
+
+$ git stash apply  
+$ git stash apply <stash id> 
+$ git stash apply stash@{1}
+
+$ git stash show  ==> will show the file that is stashed and changes made on them
+
+$ git stash pop  
+git stash pop command is quite similar to git stash apply. The main difference between both of these commands
+is stash pop command that deletes the stash from the stack after it is applied. 
+
+$ git stash drop  
+$ git stash drop <stash id>  
+
+$ git stash clear  
+
+
+########################################################################################
+Merging the branch--Git allows you to merge the other branch with the currently active branch
+git merge <branch name> 
+git merge dev-phase2  --> will merge dev2 branch with master
+
+same way if we are in dev2 branch and we want to merge the dev3 branch changes
+git merge dev-phase3
+
+we can merge using commit id as well
+git merge 2852e020909dfe705707695fd6d715cd723f9540
+
+##########################################################################################3
+git merge conflict
+--> two users checkout the from remote and make changes to same file
+user1 and user2 pull from remotye same time
+user1 make changes and push to remote
+user2 make changes to same file and tried to push
+
+will get error
+ ! [rejected]        master -> master (fetch first)
+error: failed to push some refs to 'https://github.com/Udayops/GitDevOps.git'
+
+git pull --rebase origin master ot Git pull origin master
+
+it will show the difference the
+ file
+change using vi filename(resolve conflict) .... add,commit and Push
+
+Git Mergetool(will show difference using mergetool)....(resolve conflict) .... add,commit and Push
+#############################################################################################
+
+Git Rebase
+Rebasing is a process to reapply commits on top of another base trip. 
+It is used to apply a sequence of commits from distinct branches into a final commit. 
+It is an alternative of git merge command. It is a linear process of merging.
+process of moving or combining a sequence of commits to a new base commit
+
+Master commit c1...c2..c3
+branch1 commit B1..B2..B3
+
+C1..C2...C3..C4
+     |
+     >>> B1..B2..B3
+
+Merge:
+C1..C2...C3..C4..........C5
+     |                 |
+     >>> B1..B2..B3....
+New commit Id gets created
+
+Rebase
+C1..C2...C3..C4
+     |                  ==>>>>      C1..C2...C3..C4..B1..B2..B3
+     >>> B1..B2..B3
+
+No new commit id gets created
+
+if we use git merge branch1 (in Master)
+
+
+git Rebase branch1(In master)
+
+
+git rebase master  (in branch)
+
+
+checking the log in oneline
+git log --oneline
+###########################################################################################
+Git SQUASH
+squash is used to squash the previous commits into one.
+it is a process not a command
+
+git log --oneline
+4d1379b (HEAD -> master, DEV2)  commit B 4th
+52fc7cc  commit B 3rd
+46f2a2c 2nd B commit
+748dd1e  1st B commit
+1791195  2nd M commit
+040668e 1st M commit
+
+$ git rebase -i HEAD~4
+
+pick 748dd1e 1st B commit
+pick 46f2a2c 2nd B commit
+pick 52fc7cc commit B 3rd
+pick 4d1379b commit B 4th
+
+change the above to
+r 748dd1e 1st B commit combine 2-4 commit
+s 46f2a2c 2nd B commit
+s 52fc7cc commit B 3rd
+s 4d1379b commit B 4th
+
+s ---> squash
+r --> reword(to change the comment)
+s
+save with :wq
+then commit window will appear
+change the commit comment
+save with :wq
+
+git log --oneline
+e03b0ee (HEAD -> master)  1st B commit 2--4
+1791195  2nd M commit
+040668e 1st M commit
+
+removing the remote
+$ git remote rm <destination> 
+$ git remote rm origin
+
+renaming the remote
+$ git remote rename <old name><new name>  
+git remote rename origin hd
+
+to get more information about remote
+$ git remote show <remote>  
+$ git remote show origin

@@ -1,0 +1,141 @@
+
+
+###############################################################
+Health Checks
+LIveness and Readyness
+
+1. Liveness Probe ==> Checks whether container is up and running fine <Success>.
+   tries to restart container if there is some issue with container.
+   If in the given time if it didn't come up, pod dies. replicaset will start another pod
+   Check: http,exec,TCPSocket
+
+   Initial Delay seconds: Container takes some type to come up. Give it that time. we can give that time by setting Initial delay seconds as 15sec
+   So, for 15 sec it liveness probe won't check container.After 15 sec it will check whether container up and running.
+   if it has not started even after 15 sec then it will quickly restart container
+   Tomiout seconds: max threshold after which container dies. 
+
+
+In Deployement we need to mention this
+    spec:
+      containers:
+      - name: k8s-demo
+        image: wardviaene/k8s-demo
+        ports:
+        - name: nodejs-port
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: nodejs-port
+          initialDelaySeconds: 15
+          timeoutSeconds: 30
+
+2. Readyness Probe ==> Traffic will be send to container only if it is up and running. Liveness probe should be success for readyness probe to send traffic.
+
+    spec:
+      containers:
+      - name: k8s-demo
+        image: wardviaene/k8s-demo
+        ports:
+        - name: nodejs-port
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: nodejs-port
+          initialDelaySeconds: 15
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: nodejs-port
+          initialDelaySeconds: 15
+          timeoutSeconds: 30
+
+##################################################################################################################################################################
+**************************Ingress Controller******************************
+
+
+In nodes we have multiple Nodes, And there are many application running in each nodes
+
+Suppose we have 3 different app running and all app are exposed to internet.
+solution: have one load balancer for each applications and expose to outside world.
+Problem: # load balancer are expensive to maintain
+Better Solution #: have ingress controller in k8s cluster.
+
+
+Ingress controller will receive traffic from Load balancer or outside world.
+Ingress controller can route the request to different application based on below methods.
+1. path based
+2. Host based
+
+Copy the the ingress controller setup from the Github ingress
+https://github.com/nginxinc/kubernetes-ingress
+
+Setup the Ingress controller
+https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/
+
+
+Path based application setup example
+two apps
+app1 path: /
+app2 path: /app
+
+create a ingress as below for path based Ingress
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-app
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: minikube.local
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: helloworld-v1
+            servicePort: 80
+        - path: /app
+          backend:
+            serviceName: webapp
+            servicePort: 8080
+    - host: v2.minikube.local
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: helloworld-v2
+            servicePort: 80
+
+
+**** To check ingress details
+kubectl get ingress
+
+******To describe ingress
+kubectl describe ingress ingress-app
+
+Rules:
+  Host               Path  Backends
+  ----               ----  --------
+  minikube.local
+                     /      helloworld-v1:80 (172.17.0.6:3000)
+                     /app   webapp:8080 (172.17.0.7:8080)
+  v2.minikube.local
+                     /   helloworld-v2:80 (172.17.0.8:3000)
+Annotations:         kubernetes.io/ingress.class: nginx
+
+***** Update the host file in windows (C:\Windows\System32\drivers\etc\hosts)
+192.168.99.100  minikube.local v2.minikube.local
+
+
+***** check the webpage path based
+http://minikube.local/app/   ====> gives app2 page
+http://minikube.local/       ====> gives app1 page
+
+***** check the webpage host based
+http://minikube.local/app/   ====> gives helloworld app1 page
+http://v2.minikube.local/    ====> gives helloworld app2 page

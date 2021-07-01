@@ -1,0 +1,162 @@
+#################################################################################################
+Taint and Tolerations
+#################################################################################################
+
+Taint we apply on the Node
+Toleration we apply in the Pod
+
+Taints and tolerations work together to ensure that pods are not scheduled onto inappropriate nodes. 
+One or more taints are applied to a node; this marks that the node should not accept any pods that do not tolerate the taints.
+
+Tolerations are applied to pods, and allow (but do not require) the pods to schedule onto nodes with matching taints.
+
+Node affinity is a property of Pods that attracts them to a set of nodes (either as a preference or a hard requirement). 
+Taints are the opposite -- they allow a node to repel a set of pods.
+
+
+
+Node selector
+
+       O--> node selector env = dev,   O--> node selector env = prod,    O--> node selector 
+          |                                        |                             |
+          V                                        V                             V
+Nodes  env=dev                                env=prod                      can be schedule on any nodes dev or prod node
+
+
+Effect
+ 
+Noschedule : The node is tainted after the pod is already deployed in it.If there is existing pod running in the node which doesn't hv tolerance,
+             it will not delete that pod. It will only restrict new pod which doesn't have tolerance
+
+No execute : It will delete the existing pod if it doesn't have tolerance.
+
+
+Node Affinity:All the pods with lebel dev will come only the node having affinity deploy=dev
+
+Kubectl label node name deploy=dev
+
+------------------------------------------------------------------------------------------------------------------
+kubectl taint nodes node1 key1=value1:NoSchedule
+
+kubectl taint nodes node1 key1=value1:NoExecute
+------------------------------------------------------------------------------------------------------------------
+To remove the taint
+kubectl taint nodes node1 key1=value1:NoSchedule-
+------------------------------------------------------------------------------------------------------------------
+specify a toleration for a pod in the PodSpec
+
+tolerations:
+- key: "key1"
+  operator: "Equal"
+  value: "value1"
+  effect: "NoSchedule"
+
+tolerations:
+- key: "key1"
+  operator: "Exists"
+  effect: "NoSchedule"
+----------------------------------------------------------------------------------------------------------------------
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
+  tolerations:
+  - key: "example-key"
+    operator: "Exists"
+    effect: "NoSchedule"
+---------------------------------------------------------------------------------------------------------------------------
+Multiple tainted and toleration possible
+
+kubectl taint nodes node1 key1=value1:NoSchedule
+kubectl taint nodes node1 key1=value1:NoExecute
+kubectl taint nodes node1 key2=value2:NoSchedule
+
+tolerations:
+- key: "key1"
+  operator: "Equal"
+  value: "value1"
+  effect: "NoSchedule"
+- key: "key1"
+  operator: "Equal"
+  value: "value1"
+  effect: "NoExecute"
+------------------------------------------------------------------------------------------------------------------------------------------------
+##############################################################################################################################################
+
+NODE SELECTOR
+-------------------------------------------------------
+nodeSelector is the simplest recommended form of node selection constraint.
+nodeSelector is a field of PodSpec. It specifies a map of key-value pairs. For the pod to be eligible to run on a node, 
+the node must have each of the indicated key-value pairs as labels (it can have additional labels as well)
+
+****adding label in node
+kubectl label nodes kubernetes-foo-node-1.c.a-robinson.internal disktype=ssd
+
+*****To see label in nodes
+kubectl describe node "nodename"
+
+****adding selector in pod spec
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
+  nodeSelector:
+    disktype: ssd
+
+
+the Pod will get scheduled on the node that you attached the label to
+--------------------------------------------------------------------------------------------------------------------------
+NODE AFFINITY
+--------------------------------------------------
+The affinity/anti-affinity feature, greatly expands the types of constraints you can express
+The language offers more matching rules besides exact matches created with a logical AND operation
+you can indicate that the rule is "soft"/"preference" rather than a hard requirement, so if the scheduler can't satisfy it, the pod will still be scheduled
+
+requiredDuringSchedulingIgnoredDuringExecution 
+preferredDuringSchedulingIgnoredDuringExecution
+
+You can think of them as "hard" and "soft" respectively
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/e2e-az-name
+            operator: In
+            values:
+            - e2e-az1
+            - e2e-az2
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: another-node-label-key
+            operator: In
+            values:
+            - another-node-label-value
+  containers:
+  - name: with-node-affinity
+    image: k8s.gcr.io/pause:2.0
+
+
