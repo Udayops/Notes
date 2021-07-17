@@ -1,0 +1,202 @@
+-------------------------------------------------------------------------
+Variables
+-------------------------------------------------------------------------
+
+variable "image_id" {
+  type = string
+}
+
+variable "ext_port"{
+
+}
+
+resource "docker_container" "nodered_container" {
+  count = 2
+  image = docker_image.nodered_image.latest
+  name  = join("-",["nodered",random_string.random[count.index].result])
+  ports {
+      internal = 1880
+      external = var.ext_port     ===> var access
+    }
+}
+
+
+root@ip-172-31-14-165:~/terraform# terraform apply
+var.ext_port
+  Enter a value:
+
+*********************
+
+Another way of setting variable value
+
+root@ip-172-31-14-165:~/terraform# export TF_VAR_ext_port=2021
+
+terraform Plan
+ + ports {
+          + external = 2021
+          + internal = 1880
+
+root@ip-172-31-14-165:~/terraform# unset TF_VAR_ext_port
+
+###################################################################################################################
+variable "ext_port"{
+type = number
+default=1890
+}
+
+terraform plan
+ + ports {
+          + external = 1890
+          + internal = 1880
+          + ip       = "0.0.0.0"
+          + protocol = "tcp"
+        }
+
+##################################################################################################################
+Variable validation
+-----------------------------------------------------------------------------------------------------------------
+variable "int_port"{
+type = number
+default=1881
+
+        validation {
+        condition =var.int_port == 1880
+        error_message = "The internal port must be 1880"
+        }
+
+}
+
+Terraform plan
+ Error: Invalid validation error message
+│
+│   on main.tf line 26, in variable "int_port":
+│   26:         error_message = "The internal port must be 1880"
+
+
+ terraform destroy --auto-approve && terraform applu --auto-approve
+
+##########################################################################################################################
+creating seprate file for variable and output and remove the code from main.tf
+-----------------------------------------------------------------------------------------------
+variable.tf
+----------
+
+variable "ext_port"{
+type = number
+default=1890
+}
+
+variable "int_port"{
+type = number
+default=1880
+
+        validation {
+        condition =var.int_port == 1880
+        error_message = "The internal port must be 1880."
+        }
+
+}
+
+variable "container_count"{
+type = number
+default=1
+}
+
+
+output.tf
+
+output "ip_address" {
+  value       = [for i in docker_container.nodered_container[*] : join(":",[i.ip_address,i.ports[0].external])]
+  description = "The private IP address of the main server instance."
+}
+
+output "container-name" {
+  value       = docker_container.nodered_container[*].name
+  description = "The private IP address of the main server instance."
+}
+
+
+terraform apply --auto-approve
+all works fine.
+################################################################################################################################################
+Hiding sensitive variable from git repo
+--------------------------------------------
+create terraform.tfvars file
+Place yor sensitive variables in this file and keep the file in git ignore
+
+terraform.tfvars
+----------------
+ext_port = 1880
+
+variables.tf
+-------------
+variable "ext_port"{
+type = number
+
+}
+
+terraform apply 
+work fine
+##################################################################################################################################33333333
+
+variable defination precedence
+--------------------------------
+
+terraform.tfvars
+----------------
+ext_port = 1880
+
+west.tfvars
+-----------
+ext_port = 1980
+
+
+terraform apply 
+takes variable from terraform.tfvars
+
+terraform apply --var-file=west.tfvars
+takes variable from west.tfvars
+
+terraform apply -var ext_port=1990
+takes variable from CLI 1990
+
+command line oveerides tfvars file
+
+terraform apply -var ext_port=1990 --var-file=west.tfvars
+takes variable from west.tfvars
+
+terraform apply --var-file=west.tfvars -var ext_port=1990 
+takes variable from ext_port 1990... the last one get applied
+#########################################################################################################
+Hiding variables from CLI
+-------------------------------
+
+variable "ext_port"{
+type = number
+default=1890
+sensitive = true
+}
+
+sensitive need to mention in output if it is refrenced there
+output "ip_address" {
+  value       = [for i in docker_container.nodered_container[*] : join(":",[i.ip_address,i.ports[0].external])]
+  description = "The private IP address of the main server instance."
+  sensitive = true
+}
+
+terraform appply
+Outputs:
+
+container-name = [
+  "nodered-5rjx",
+]
+ip_address = <sensitive>
+
+root@ip-172-31-14-165:~/terraform# terraform console
+> var.ext_port
+(sensitive)
+
+root@ip-172-31-14-165:~/terraform# terraform show | grep external
+        external = (sensitive)
+
+*But you still be able to see this file in terraform state file.. make sure u give access only to restricted folks

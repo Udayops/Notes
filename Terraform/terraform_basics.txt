@@ -1,0 +1,269 @@
+
+main.tf
+------------------------------------------------------------------------------------------------------
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 2.13.0"
+    }
+  }
+}
+
+provider "docker" {
+host = "unix:///var/run/docker.sock"
+}
+
+# pulls the image
+resource "docker_image" "nodered_image" {
+  name = "nodered/node-red:latest"
+}
+# Create a container
+resource "docker_container" "nodered_container" {
+  image = docker_image.nodered_image.latest
+  name  = "nodred"
+  ports {
+      internal = 1880
+      external = 1880
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------
+# terraform init
+# terraform plan
+# terraform apply
+
+to get the ip address of the host
+curl http://169.254.169.254/latest/meta-data/public-ipv4
+
+# cat terraform.tfstate ==> terraform current resource state file
+
+to distroy the infrastructure
+# terraform destroy --auto-approve
+
+# terraform show ===> to get all the resource details after they have been implemented. output of 
+ terraform show | grep ip
+ terraform show | grep name
+
+to get the list of all the resources created
+# terraform state list
+
+Terraform console. To check the output variable
+root@ip-172-31-14-165:~/terraform# terraform console
+> docker_container.nodered_container.name
+"nodred"
+> docker_container.nodered_container.ip_address
+"172.17.0.2"
+-----------------------------------------------------------------------------------------------------------
+Defining output variables in terraform
+----------------------------------------------------------------------------------------------------
+output "ip_address" {
+  value       = docker_container.nodered_container.ip_address
+  description = "The private IP address of the main server instance."
+}
+
+output "container-name" {
+  value       = docker_container.nodered_container.name
+  description = "The private IP address of the main server instance."
+}
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+container-name = "nodred"
+ip_address = "172.17.0.2"
+
+Another way to see output variables
+root@ip-172-31-14-165:~/terraform# terraform output
+container-name = "nodred"
+ip_address = "172.17.0.2"
+
+-----------------------------------------------------------------------------------------------------------------------
+Join Function: Create more useful output
+-----------------------------------------------------------------------------------------------------------------------
+join(separator, list)
+
+output "ip_address" {
+  value       = join(":",[docker_container.nodered_container.ip_address,docker_container.nodered_container.ports[0].external])
+  description = "The private IP address of the main server instance."
+}
+
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+container-name = "nodred"
+ip_address = "172.17.0.2:1880"
+
+------------------------------------------------------------------------------------------------------------------------------
+The Random resource
+------------------------------------------------------------------------------------------------------------------------------
+
+resource "random_string" "random" {
+  length           = 4
+  special          =false
+  upper            =false
+}
+
+resource "docker_container" "nodered_container" {
+  image = docker_image.nodered_image.latest
+  name  = join("-",["nodered",random_string.random.result])
+  ports {
+      internal = 1880
+      external = 1880
+    }
+}
+
+Outputs:
+
+container-name = "nodered-19xo"
+--------------------------------------------------------------------------------------------------------------------------------------
+Count
+--------------------------------------------------------------------------------------------------------------------------------------
+resource "random_string" "random" {
+  count            = 2
+  length           = 4
+  special          =false
+  upper            =false
+}
+
+
+resource "docker_container" "nodered_container" {
+  count = 2
+  image = docker_image.nodered_image.latest
+  name  = join("-",["nodered",random_string.random[count.index].result])
+  ports {
+      internal = 1880
+      #external = 1880
+    }
+}
+
+
+output "ip_address" {
+  value       = join(":",[docker_container.nodered_container[0].ip_address,docker_container.nodered_container[0].ports[0].external])
+  description = "The private IP address of the main server instance."
+}
+
+output "ip_address1" {
+  value       = join(":",[docker_container.nodered_container[1].ip_address,docker_container.nodered_container[1].ports[0].external])
+  description = "The private IP address of the main server instance."
+}
+
+
+
+
+OUTPUT:
+
+container-name = "nodered-19xo"
+container-name1 = "nodered-5zkb"
+ip_address = "172.17.0.2:1880"
+ip_address1 = "172.17.0.3:49153"
+
+------------------------------------------------------------------------------------------------------------------------------
+Splat
+-----------------------------------------------------------------------------------------------------------------------------
+The special [*] symbol iterates over all of the elements of the list given to its left and accesses from each one the attribute name given on its right
+can only apply value that isn't a list, set, or tuple
+
+var.list[*].id
+
+> docker_container.nodered_container[*].name
+[
+  "nodered-19xo",
+  "nodered-5zkb",
+]
+
+output "container-name" {
+  value       = docker_container.nodered_container[*].name
+  description = "The private IP address of the main server instance."
+}
+
+Outputs:
+
+container-name = [
+  "nodered-19xo",
+  "nodered-5zkb",
+]
+
+------------------------------------------------------------------------------------------------------------------------------------
+For expressions
+------------------------------------------------------------------------------------------------------------------------------------
+[for s in var.list : upper(s)]
+[for k, v in var.map : length(k) + length(v)]
+[for i, v in var.list : "${i} is ${v}"]
+
+output "ip_address" {
+  value       = [for i in docker_container.nodered_container[*] : join(":",[i.ip_address,i.ports[0].external])]
+  description = "The private IP address of the main server instance."
+}
+
+Outputs:
+
+container-name = [
+  "nodered-19xo",
+  "nodered-5zkb",
+]
+ip_address = [
+  "172.17.0.3:49154",
+  "172.17.0.2:49153",
+]
+
+another way
+
+[for i in docker_container.nodered_container[*] : join(":",[i.ip_address],i.ports[*]["external"])]
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+tainted
+-------------------------------------------------------------------------------------------------------------------------------------------
+The terraform taint command informs Terraform that a particular object has become degraded or damaged. 
+Terraform represents this by marking the object as "tainted" in the Terraform state, 
+in which case Terraform will propose to replace it in the next plan you create.
+
+terraform taint random_string.random[0]
+root@ip-172-31-14-165:~/terraform# terraform taint random_string.random[0]
+Resource instance random_string.random[0] has been marked as tainted.
+
+ # random_string.random[0] is tainted, so must be replaced
+ ~ name              = "nodered-19xo" -> (known after apply) # forces replacement
+
+Apply complete! Resources: 2 added, 0 changed, 2 destroyed. (1 resource has dependency so that also destroyed and recreated)
+
+terraform untaint random_string.random[0]
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+state lock and breaking state
+------------------------------------------------------------------------------------------------------------------------------------------------
+open two windows of same instance and run below command parallely
+
+terraform apply --auto-approve -lock=false     |     terraform apply --auto-approve
+
+container created  "nodred-pltg"                     container created  "nodred-moiv"
+
+two containers created, but only one mentioned in state
+
+terraform show "nodred-pltg" 
+
+docker ps -a ===> both containers running but needed only one
+
+terraform destroy --auto-approve  ==> unable to remove docker image
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+Terraform Import
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Create a container
+resource "docker_container" "nodered_container2" {
+  image = docker_image.nodered_image.latest
+  name  = "nodred-3pf1"
+}
+
+terraform import docker_container.nodered_container2 nodred-3pf1
+terraform import docker_container.nodered_container2 $(docker inspect --format="{{.ID}}" nodred-3pf1)
+
+
+terraform state list
+==> both container displayed
+
