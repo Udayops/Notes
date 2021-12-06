@@ -15,6 +15,13 @@ $ git push -u origin HEAD
 changing to master branch
 git branch -m master
 
+to display changes for that single commit
+git show 5eba8ab3b718a6ab6610186be934ba214e228a58
+
+However, the time-limiting options such as --since and --until are very useful. 
+For example, this command gets the list of commits made in the last two weeks:
+$ git log --since=2.weeks
+This command works with lots of formats — you can specify a specific date like "2008-01-15", or a relative date such as "2 years 1 day 3 minutes ago".
 ########################################################################################
 GIT Revert
 revert is used to revert some changes
@@ -259,3 +266,10 @@ git remote rename origin hd
 to get more information about remote
 $ git remote show <remote>  
 $ git remote show origin
+
+
+
+before 6 months git log..
+
+3 month log
+shared library 

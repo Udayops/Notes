@@ -1,0 +1,55 @@
+How to take backup in Jenkins
+-->install plugin thinBackup
+--> open thin backup.. set the backup directory
+--> take backup
+--> restore backup
+
+variables in jenkins
+Building in workspace /var/lib/jenkins/workspace/job1
+[job1] $ /bin/bash /tmp/jenkins4178265182234355073.sh
+
+echo "${WORKSPACE}"
+echo "${JOB_NAME}"
+echo "${NODE_NAME}"
+echo "${BUILD_URL}"
+echo "${JOB_URL}"
+echo "${GIT_COMMIT}"
+echo "${GIT_URL}"
+
+/var/lib/jenkins/workspace/job1
+job1
+master
+http://192.168.5.2:8080/job/job1/2/
+http://192.168.5.2:8080/job/job1/
+--------------------------------------------------------------------------------------------
+
+Jenkins User and Roles (provide user to access on jobs)
+
+Create new users (manage jenkins--> Security --> Manage users)
+configure users
+create and manage user roles --> role based startegy plugin installed --> restart jenkins
+Manage jenkins--> configure global security--> authorization--> role based startegy
+manage jenkins--> Security --> Manage and assign roles(Global,item, node roles)
+---------------------------------------------------------------------------------------------
+changing jenkins port
+ sudo nano /etc/default/jenkins
+Then under JENKINS_ARGS section, you can change the port like this HTTP_PORT=9999.
+Then you should restart Jenkins with sudo service jenkins restart.
+Then to check the status use this command sudo systemctl status jenkins
+--------------------------------------------------------------------------------------------
+How to resolve jenkins build failure?
+Most Jenkins problems require reading the console output
+Console Output gives the details like line by line build execution sequence with time stamp,Build Success messages,
+Build Failure messgaes, File location details at which ERROR has occured, ERROR details etc..,
+look for the details: File at which the ERROR has occured, ERROR details.
+Then Click Workspace on the left and go to the specified file location. Ex: data-mart-db/target/ 
+[You can find log files below the actual code files.]
+Open the log files one by one and go to the end of file(ctrl+end). 
+Error details will be displayed, if the error has occured in that file.
+Fix the ERRORs in the local setup first & then do the checkins to the repository again.
+---------------------------------------------------------------------------------------------------
+difference between softlink and hard link
+A symbolic or soft link is an actual link to the original file, whereas a hard link is a mirror copy of the original file.
+ ... Even if you delete the original file, the hard link will still has the data of the original file.
+ Because hard link acts as a mirror copy of the original file
+------------------------------------------------------------------------------------------------------

@@ -1,0 +1,106 @@
+
+Jenkins all build/test will be saved in workspace.
+:/var/lib/jenkins/workspace$
+
+Build periodically 
+* * * * *
+
+general --> This project is parameterized
+Name: Env
+Choices:
+prod
+stage
+preprod
+dev
+
+------------------------------------------------------------------------------------------------
+simple script execution
+-------------------------------------------------------------------------------------------------
+Source Code Management --> git 
+Repository URL : https://github.com/teachdops/gitdemo.git
+
+Build Environment-->
+Delete workspace before build starts
+Add timestamps to the Console Output
+
+Build --> Execute Shell
+#!/bin/bash
+
+echo "${WORKSPACE}"
+
+${WORKSPACE}/info.sh
+
+Course=Devops
+Inst=Besant
+
+echo " My course is ${Course}, my institute in ${Inst}"
+
+if [[ $ENV == 'prod' ]];then
+    echo "deploy the application on prod"
+elif [[ $ENV == 'stage' ]];then
+    echo "deploy the application on stage"
+elif [[ $ENV == 'dev' ]];then
+    echo "deploy the application on dev"  
+else    
+    echo "deploy the application on pre-prod"  
+fi    
+
+-----------------------------------------------------------------------------------------------------
+Ansible adhoc execution
+-----------------------------------------------------------------------------------------------------
+pre requisite on ansible@jenkins-server
+
+ssh-keygen
+Your identification has been saved in /home/ansible/.ssh/id_rsa.
+Your public key has been saved in /home/ansible/.ssh/id_rsa.pub.
+
+for srv in lab-k8s-master lab-k8s-node0{1..2} ;do sshpass -p password ssh-copy-id -o StrictHostKeyChecking=no ansible@${srv};done
+cd /jenkins/ansible-c/kubernetes-setup
+ansible -m ping all
+
+Source Code Management --> git 
+Repository URL : https://github.com/teachdops/jenkins.git
+
+Additional Behaviours --> Sparse checkout paths ---> path
+ansible-c/kubernetes-setup/                                ===> to clone only a directory not complete git repository
+
+Build--> Invoke Ansible Ad-hoc command
+Ansible installation --> ansible
+Host pattern --> all
+inventory ---> File or host list
+ansible-c/kubernetes-setup/hosts
+Module --> Ping
+Credentials --> add credentials --> 
+ Kind --> SSH username with private key,, username --> ansible, enter private key directly (from ansible@jenkins-server... cat .ssh/id_rsa)
+username: ansible
+Advanced--> disable the host SSH key check
+
+------------------------------------------------------------------------------------------------------------
+Ansible playbook job
+-------------------------------------------------------------------------------------------------------------
+pre requisite on ansible@jenkins-server
+
+ssh-keygen
+Your identification has been saved in /home/ansible/.ssh/id_rsa.
+Your public key has been saved in /home/ansible/.ssh/id_rsa.pub.
+
+for srv in lab-k8s-master lab-k8s-node0{1..2} ;do sshpass -p password ssh-copy-id -o StrictHostKeyChecking=no ansible@${srv};done
+cd /jenkins/ansible-c/kubernetes-setup
+ansible -m ping all
+
+Source Code Management --> git 
+Repository URL : https://github.com/teachdops/jenkins.git
+
+Additional Behaviours --> Sparse checkout paths ---> path
+ansible-c/kubernetes-setup/                                ===> to clone only a directory not complete git repository
+
+Build--> Invoke Ansible playbook
+Ansible installation --> ansible
+playbook path --> ansible-c/kubernetes-setup/test.yaml
+inventory ---> File or host list
+ansible-c/kubernetes-setup/hosts
+
+Credentials --> add credentials --> 
+ Kind --> SSH username with private key,, username --> ansible, enter private key directly (from ansible@jenkins-server... cat .ssh/id_rsa)
+username: ansible
+Advanced--> disable the host SSH key check

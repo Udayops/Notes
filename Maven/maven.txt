@@ -1,0 +1,58 @@
+build automation tool
+maven automates evrything
+Just need to know how it works
+maven Lifecycle                      Phases        Goals   Powered by plugin
+--------------------------------------------------
+- Default
+                                     compile      compile     jar file
+                                     test         test        jar file
+                                     package      package     jar file
+                                     install      install     jar file
+- site
+- clean
+
+Steps for maven
+
+1) Install java JDK & JAVA_HOME
+2) download and install Maven
+   extract and copy tp C:\tool\Maven
+   C:\tool\Maven\bin --> Add to Path
+3) verify 
+   mvn -v
+Decide project coordinates
+4) decide projevt name?   group id
+component name?  (module name)        Artifact id
+version of component?
+                          Release -1.0,1.0.1
+                          Snapshot - 1.0-SNAPSHOT ,1.0.1-SNAPSHOT (not ready for production)
+packaging format?
+jar, war ,ear,pom
+
+what is POM
+--------------------------------------
+project object model
+XML
+contains 
+-- Maven coordinates
+-- Project depedencies
+-- Projecr EXT plugin
+-- Properties
+-- Many
+
+mvn compile
+mvn clean --delete the target directory
+mvn package
+
+
+How maven works in term of dependency
+---------------------------------------------------
+myPrj 
+                -- Ext Lib     --- repo.maven.apache.org/maven2/
+                -- Int Lib     ---nexus - Artifactory
+
+mvn goal---> pom.xml --> read dependency --> would get it from local repo -->
+                                             if found then load into JVM
+                                             Not found --> central repo --> download to local repo --> load into JVM
+
+local repo
+ 
