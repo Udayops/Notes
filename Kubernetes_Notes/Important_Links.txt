@@ -1,0 +1,23 @@
+for checking container logs in kubernetes
+
+https://faun.pub/viewing-logs-in-kubernetes-e055f936e187
+
+#kubectl -n kube-system logs podname ==> Viewing logs of a pod running a single container inside it
+
+#kubectl -n kube-system logs -f podname  ==> This will also show the appending logs at run time
+
+#kubectl -n kube-system get po -l k8s-app=kube-state-metric  ==> Viewing logs of a particular container inside a pod running multiple container
+                                                                 i have searched for the pods via label
+
+#kubectl -n kube-system logs podname
+
+kubectl -n kube-system logs podname -c container-name ==> This will help you to see the containers available in a multi-container pod 
+
+# kubectl -n kube-system logs — tail=10 podname ==> viewing logs of a pod based on number of lines you want to see
+
+#kubectl -n kube-system logs — since=1h ==> Viewing logs of a pod based on time
+
+#kubectl -n kube-system log — since-time=“2019–02–06T03:59:40.417Z” ==> Viewing logs of a pod based on date-time value
+
+
+

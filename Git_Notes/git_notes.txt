@@ -12,6 +12,18 @@ git branch -m dev-phase3
 Set upstream branch using an alias
 $ git push -u origin HEAD
 
+recovering a deleted branch
+deleting
+---------
+$git branch -D preprod
+$git push origin --delete quickfix
+
+recovery
+--------
+-->git reflog
+-->Identify the history stamp
+--> recover --> git checkout -b preprod HEAD@{4}
+
 changing to master branch
 git branch -m master
 
@@ -273,3 +285,9 @@ before 6 months git log..
 
 3 month log
 shared library 
+
+
+parent
+chi
+
+

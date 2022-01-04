@@ -5,6 +5,7 @@ Lets understand Docker Container - deeper:
 	- Remove and Rename your container
           docker container rename 7a5ba61301cb server_2  (For rename)
           docker container rm e6fff644fe5e -f (removing single running container)
+          docker rm -f $(docker ps -a -q)  ==> remove all running container
           docker container prune (removing all stopped container)
           
 	- start ( docker start 7a5ba61301cb)

@@ -1,0 +1,184 @@
+Volumes
+497  docker info | grep -i root
+  498  ls -ltr /var/lib/docker/
+  499  docker ps -a
+  500  docker stop $(docker ps -q)
+  501  docke rps -a
+  502  docker ps -a
+  503  sudo systemctl stop docker.service
+  504  sudo systemctl status docker.service
+  505  vim /usr/lib/systemd/system/docker.service
+  506  sudo vim /usr/lib/systemd/system/docker.service
+  507  sudo systemctl daemon-reload
+  508  sudo systemctl start docker.service
+  509  sudo systemctl status docker.service
+  510  docker info | grep -i root
+  511  docker ps -a
+  512  sudo systemctl stop docker.service
+  513  rsync -aqxP /opt/docker/ /var/lib/docker
+  514  sudo rsync -aqxP /opt/docker/ /var/lib/docker
+  515  sudo systemctl start docker.service
+  516  sudo systemctl status docker.service
+  517  docker ps
+  518  docker ps -a
+  519  docker images
+  520  docker start csvserver
+  521  docker start prometheus
+  522  docker start Prometheus
+  523  docke rps
+  524  docker ps
+  525  sudo vim /usr/lib/systemd/system/docker.service
+  526  ls -ltr /etc/systemd/system/multi-user.target.wants/
+  527  clear
+  528  docker run -d --name mysql-server -p 3306:3306 mysql
+  529  docker ps
+  530  docker ps -a
+  531  docker logs mysql-server
+  532  docker rm -f mysql-server
+  533  docker run -d --name mysql-server -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password mysql
+  534  docker ps
+  535  docker exec -it mysq-server bash
+  536  docker exec -it mysql-server bash
+  537  docker rm -f mysql-server
+  538  df -h
+  539  mkdir /opt/mysql -p
+  540  sudo mkdir /opt/mysql -p
+  541  docker ps
+  542  docker run -d --name mysql-server -p 3306:3306 -v /opt/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  543  docker ps
+  544  docker exec -it mysql-server bash
+  545  ls -ltr /opt/mysql/
+  546  docker rm -f mysql-server
+  547  cd /opt/mysql/
+  548  ls
+  549  clear
+  550  docker run -d --name mysql-server -p 3306:3306 -v /opt/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  551  docker exec -it mysql-server bash
+  552  clear
+  553  docker volume create mysql
+  554  docker volume ls
+  555  pwd
+  556  cd /var/lib/docker/
+  557  ls
+  558  sudo ls
+  559  sudo ls -ltr volumes
+  560  ls /opt/mysql/
+  561  docker run -d --name mysql-server1 -p 3307:3306 -v mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  562  docker ps
+  563  $docker run -d --name mysql-server2 -p 3308:3306 -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  564  pwd
+  565  cd volumes
+  566  sudo ls -ltr volumes
+  567  date
+  568  docker run -d --name mysql-server2 -p 3308:3306 -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  569  docker ps
+  570  docker ps -a
+  571  docker logs  mysql-server2
+  572  docker rm -f mysql-server2
+  573  docker run -d --name mysql-server2 -p 3308:3306 -v :/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  574  docker ps
+  575  top
+  576  free -m
+  577  docker ps
+  578  docker rm -f $(docker ps -a -q)
+  579  clear
+  580  docker ps
+  581  docker run -d --name mysql-server2 -p 3308:3306 -v :/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+  582  docke rps
+  583  docker ps
+  584  ls -ltr volumes
+  585  sudo ls -ltr volumes
+  586  ls -ltr /volumes/fc10f114f7d0d115ba51d9105413f803f0abf0a6d712e4cb562f0203622f2d8b
+  587  sudo ls -ltr /volumes/fc10f114f7d0d115ba51d9105413f803f0abf0a6d712e4cb562f0203622f2d8b
+  588  sudo ls -ltr volumes/fc10f114f7d0d115ba51d9105413f803f0abf0a6d712e4cb562f0203622f2d8b
+  589  sudo ls -ltr volumes/fc10f114f7d0d115ba51d9105413f803f0abf0a6d712e4cb562f0203622f2d8b/_data
+  590  history
+
+
+Docker Volume
+by default data stored in the container, if container is deleted data is lost
+
+Use of Volume
+================
+decoupling container from storage	
+share volume (storage/data) among different containers
+attach volume to container
+On deleting container volume doesn't delete
+
+docker volume
+docker create volume myvol1
+docker volume ls
+docker volume inspect myvol1
+docker volume rm myvol1
+docker volume prune(to delete all unused volume)
+
+Practical
+===========================================================================================
+Mount volume
+1) create directory
+sudo mkdir /opt/mysql -p
+
+2) Mount the volume while creating the mysql container
+docker run -d --name mysql-server -p 3306:3306 -v /opt/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql 
+
+3) go inside the container and work on mysql
+docker exec -it mysql-server bash
+
+root@9a67768bf6c1:/# mysql -u root -p
+Enter password:
+
+mysql> create database testdb;
+mysql> show database;
+mysql> use testdb;
+mysql> create table student_name(name varchar(25));
+mysql> insert into student_name values('uday');
+
+4) come out 
+
+5) delete the existing container
+docker rm -f mysql-server
+
+6) create new container with mysql and use the same mount volume
+docker run -d --name mysql-server1 -p 3306:3306 -v /opt/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql 
+
+7) go inside the container and check all the data will be there.
+
+Name Volume
+================================================================================================
+1) create the volume in local directory
+docker volume create mysql
+docker volume ls
+docker volume inspect mysql (to know the directory where data will be stored)
+
+2)create the mysql container using mysql volume
+docker run -d --name mysql-server1 -p 3307:3306 -v mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+
+3) go inside the container and work on mysql
+docker exec -it mysql-server1 bash
+
+root@9a67768bf6c1:/# mysql -u root -p
+Enter password:
+
+mysql> create database testdb;
+mysql> show database;
+mysql> use testdb;
+mysql> create table student_name(name varchar(25));
+mysql> insert into student_name values('uday');
+
+4) come out 
+
+5) delete this container and ytry to use same volume in new container and check if data is present
+
+Anonymous volume:
+==================================================================================================
+1) create the mysql container with anonymous volume
+docker run -d --name mysql-server2 -p 3308:3306 -v :/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password mysql
+
+2) one anonymous volume will be created
+docker volume ls
+
+
+
+ 
+	
+
