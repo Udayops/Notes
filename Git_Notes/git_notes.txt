@@ -289,5 +289,6 @@ shared library
 
 parent
 chi
+git pull vs git fetch testing
 
 
